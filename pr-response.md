@@ -1,7 +1,10 @@
 # PR Response Doc — CineLog Watchlist Feature
 
 ## AI Usage
-<!-- Fill in at the end — how you used AI tools during this project -->
+I used AI to :
+- Inspect the existing collection implementation and tests.
+- Used it to trace whether the `public` field was backed by working privacy controls
+- Used it to play devil advocate to evaluate the maintainer's sort-order comment.
 
 ## Comment 1 — Rename
 **What I did:**
@@ -32,13 +35,43 @@ Ran `pytest tests/test_watchlist.py -v` and `pytest tests/ -v`.
 
 ## Comment 4 — Default visibility
 **My position:**
+Watchlist entries should default to `public=False` until the application has
+working privacy controls.
+
 **Reasoning:**
+Although `WatchlistEntry` currently has a `public` field, that field is only
+metadata. `add_to_watchlist()` does not accept a visibility choice, there is no
+endpoint for changing visibility, and `get_watchlist()` does not use the field
+to restrict access. The `GET /watchlist/<user_id>` endpoint also has no
+authorization check. As a result, users currently cannot make an informed
+visibility choice or rely on `public=False` to keep an entry private. Defaulting
+to private is the safer behavior until those controls are implemented.
+
 **Tradeoff acknowledged:**
+CineLog is a community film-tracking app, so public watchlists could improve
+sharing and film discovery. However, that benefit should not come from exposing
+user data by default without a functioning opt-in control. Once visibility is
+enforced and users can change it, the team can revisit whether public-by-default
+fits the intended product experience.
 
 ## Comment 5 — Sort order
 **My position:**
+I agree with the maintainer and changed watchlists to sort by `date_added`
+descending, so the most recently added films appear first.
+
 **Reasoning:**
+A watchlist is more useful as a record of recent intent than as an alphabetical
+catalog. Users returning to it are likely to look for films they recently
+decided to save, and newest-first makes those films immediately visible. This
+also matches the existing `get_collection()` ordering and gives the user
+a consistent experience.
+
 **Engagement with reviewer's point:**
+The maintainer's point that most users want to see recent additions is more
+persuasive than keeping the current alphabetical order. Alphabetical sorting
+can help someone find a known title in a long list, but that need would be
+better addressed later through search or a user-selectable sort option rather
+than making it the default. For now, newest-first makes the most sense.
 
 ## Comment 6 — Rebase
 **What conflicted:**
