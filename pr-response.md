@@ -12,7 +12,13 @@ Using editor's project-wide search
 
 ## Comment 2 — Deduplication
 **What I did:**
+Add deduplication logic to add_to_watchlist() in services/watchlist_service.py. Following the pattern from add_to_collection() in services/collection_service.py.
+- Added AlreadyInWatchlistError.
+- Checks for an existing entry matching user_id and film_id.
+- Raises AlreadyInWatchlistError before inserting a duplicate.
+
 **How I verified:**
+Ran the pytest using ./.venv/bin/pytest -q
 
 ## Comment 3 — Missing test
 **What I did:**
