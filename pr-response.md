@@ -22,7 +22,13 @@ Ran the pytest using ./.venv/bin/pytest -q
 
 ## Comment 3 — Missing test
 **What I did:**
+- Reviewed tests/test_collection.py and especially test_add_to_collection_nonexistent_film_raises to see how it works.
+- Determine what import I needed for tests
+- Create sample user and isolated test app with an in-memory database.
+- Then added fake film id test
+
 **How I verified:**
+Ran `pytest tests/test_watchlist.py -v` and `pytest tests/ -v`.
 
 ## Comment 4 — Default visibility
 **My position:**
