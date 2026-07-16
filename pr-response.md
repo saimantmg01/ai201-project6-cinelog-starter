@@ -92,4 +92,59 @@ between `origin/main` and this branch with `git log --merges`. All five tests
 pass and no merge commits remain in the feature branch history.
 
 ## PR Description
-<!-- Written at the end — feature overview, design decisions, manual testing steps -->
+
+### What this PR does
+Adds a Watchlist feature to CineLog, alongside the existing Collection feature. Users can:
+- `POST /watchlist/<user_id>/add` — save a film to their watchlist (body: `{"film_id": "<uuid>"}`)
+- `GET /watchlist/<user_id>` — view all films on their watchlist, sorted alphabetically by title, with `date_added` and `public` metadata attached to each film
+
+It follows the same `verb_to_noun` naming convention and film-lookup pattern as the collection feature, and targets main's UUID-based `Film`/`User` models.
+
+### Design decisions
+- **Naming** — renamed the initial `save_to_watchlist()` to `add_to_watchlist()` to match the project's `verb_to_noun` convention (Comment 1).
+- **Deduplication** — `add_to_watchlist()` raises `AlreadyInWatchlistError` if the `(user_id, film_id)` pair already exists, mirroring `add_to_collection()` (Comment 2).
+- **Test coverage** — added a test asserting `add_to_watchlist()` raises `FilmNotFoundError` for a nonexistent `film_id`, following the pattern in `test_collection.py` (Comment 3).
+- **Default visibility** — see Comment 4 for the position and full reasoning on why watchlist entries should default to private.
+- **Sort order** — see Comment 5 for the position and full reasoning on `date_added` vs. alphabetical ordering.
+- **Rebase onto main's UUID refactor** — resolved a silent conflict where main's model refactor dropped `WatchlistEntry`; restored it with `film_id` as `db.String(36)` to match the new UUID `Film.id` (Comment 6).
+
+### How to manually test
+1. Install dependencies and start the app:
+   ```bash
+   pip install -r requirements.txt
+   python app.py
+   ```
+2. Seed a user and a film — there's no creation endpoint for either, so use a one-off shell:
+   ```bash
+   python3 -c "
+   from app import create_app, db
+   from models import User, Film
+   app = create_app()
+   with app.app_context():
+       user = User(username='tester', email='tester@example.com')
+       film = Film(title='Test Film', genre='Drama', year=2020)
+       db.session.add_all([user, film])
+       db.session.commit()
+       print('user_id:', user.id)
+       print('film_id:', film.id)
+   "
+   ```
+3. Add the film to the watchlist:
+   ```bash
+   curl -X POST http://localhost:5000/watchlist/<user_id>/add \
+     -H "Content-Type: application/json" \
+     -d '{"film_id": "<film_id>"}'
+   ```
+   Expect `201` with the film plus `date_added` and `public` fields.
+4. View the watchlist:
+   ```bash
+   curl http://localhost:5000/watchlist/<user_id>
+   ```
+   Expect a list containing the film just added.
+5. Repeat step 3 with the same `film_id` — the service rejects the duplicate (`AlreadyInWatchlistError`), though it currently surfaces as a 500 due to the known limitation above rather than a clean 409.
+6. Repeat step 3 with a made-up UUID for `film_id` — the service rejects it (`FilmNotFoundError`), same known limitation (500 instead of 404).
+7. Run the automated test suite:
+   ```bash
+   pytest tests/
+   ```
+   All tests should pass.
