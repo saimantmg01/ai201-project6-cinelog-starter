@@ -75,8 +75,21 @@ than making it the default. For now, newest-first makes the most sense.
 
 ## Comment 6 — Rebase
 **What conflicted:**
+The branch had a conflict in `.gitignore`. Main's UUID refactor also
+replaced the older models file, which removed `WatchlistEntry` without producing
+a textual merge conflict.
+
 **How I resolved it:**
+I kept the combined `.gitignore` entries, restored `WatchlistEntry` on top of
+main's models, and changed its `film_id` foreign key to `db.String(36)` so it
+matches the UUID primary key on `Film`. I also updated the watchlist service and
+route documentation to describe film IDs as UUIDs rather than integers.
+
 **How I verified no conflict remains:**
+I ran the complete test suite, searched the watchlist code for stale integer-ID
+references, checked the diff for whitespace errors, and inspected the commits
+between `origin/main` and this branch with `git log --merges`. All five tests
+pass and no merge commits remain in the feature branch history.
 
 ## PR Description
 <!-- Written at the end — feature overview, design decisions, manual testing steps -->
